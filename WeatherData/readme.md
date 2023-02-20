@@ -6,7 +6,7 @@ And we have to predict next X days
 The data downloaded is hourly, the _historical_ is up until 3 months ago and the _recent_ includes the last 4 months measurements
 
 Precipitation (hourly)
-- Take average between opening times or take sum between opening times
+- Take average between opening times or take sum between opening times?
 
 Temperature (hourly)
-- Take average, minimum or maximum between opening times (maybe even columns for several hours, model find might more important hour)
+- Take average, minimum or maximum between opening times (maybe even columns for several hours, model find might more important hour)?
