@@ -36,8 +36,8 @@ dataframe will consist of temp(mean), day, month, year
 '''
 def cleanTempData():
     # Load csv's
-    dfTempHist = pd.read_csv('T_historical.csv', sep = ",", skiprows=10, usecols=[0,1,2]) # TODO wtf why sep = commas
-    dfTempRecent = pd.read_csv('T_recent.csv', sep = ",", skiprows=10, usecols=[0,1,2])
+    dfTempHist = pd.read_csv('WeatherData/T_historical.csv', sep = ",", skiprows=10, usecols=[0,1,2]) # TODO wtf why sep = commas
+    dfTempRecent = pd.read_csv('WeatherData/T_recent.csv', sep = ",", skiprows=10, usecols=[0,1,2])
 
     # Remove null data
     dfTempHist=dfTempHist.dropna()
@@ -63,7 +63,5 @@ def cleanTempData():
     # Get mean of each day
     dfAll = _meanTemp(dfAll)
 
-    print(dfAll.describe()) 
-
-
-cleanTempData()
+    return dfAll
+                    
