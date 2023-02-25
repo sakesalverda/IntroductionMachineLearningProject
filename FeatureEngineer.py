@@ -3,7 +3,7 @@ import pandas as pd
 import datetime as dt
 from WeatherData.weatherPrecip import cleanPrecipData
 from WeatherData.weatherTemp import cleanTempData
-from HolidayData.holiday import holiday# # 
+from HolidayData.holiday import holiday
 
 
 def _salaryDayInMonth(today, delta = 0):
@@ -50,10 +50,13 @@ def daysSinceSalary(today):
     return delta.days
 
 
+def getDataForDay(dt, df): 
+    return df[(df["Year"] == dt.year) & (df["Month"] == dt.month) & (df["Day"] == dt.day)]
+
 def determineHoliday(dt, holidayData):
     important_list = ["New Year Day", "New Year Eve", "Christmas Eve", "Midsummer Day"]
 
-    holidayLabel = holidayData[(holidayData["Year"] == dt.year) & (holidayData["Month"] == dt.month) & (holidayData["Day"] == dt.day)]["Holiday"]
+    holidayLabel = getDataForDay(dt, holidayData)["Holiday"]
 
     if len(holidayLabel.values) > 0:
         holidayLabel = holidayLabel.values[0]
@@ -69,14 +72,18 @@ def determineHoliday(dt, holidayData):
     return 0
 
 def getTemperature(dt, temperatureData):
-    return 20
+    dayTemperature = getDataForDay(dt, temperatureData)["Lufttemperatur"]
+
+    return dayTemperature.values[0]
 
 def getPrecipitation(dt, precipitationData):
-    return 0
+    dayPrecipitation = getDataForDay(dt, precipitationData)["Nederbördsmängd"]
+
+    return dayPrecipitation.values[0]
 
 
 
-def processDate(df):
+def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
     # Convert into basic year, month, day and weekday
     df["Date"] = pd.to_datetime(df["Date"], format = "%Y-%m-%d")
     
@@ -85,37 +92,46 @@ def processDate(df):
     df["Day"] = df["Date"].dt.day
     df["Weekday"] = df["Date"].dt.weekday
 
-    # dayColumns = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    # currentDayIndex = df["Date"].dt.isoweekday()
-    # currentDayColumn = dayColumns[currentDayIndex]
+    dayColumns = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    for (idx, dayColumn) in enumerate(dayColumns):
+        df[dayColumn] = df["Weekday"] == idx
 
-    # df[currentDayColumn] = 1
-    # df[dayColumns[~currentDayColumn]] = 0
-    
-    df["Monday"] = df["Weekday"] == 0
-    df["Tuesday"] = df["Weekday"] == 1
-    df["Wednesday"] = df["Weekday"] == 2
-    df["Thursday"] = df["Weekday"] == 3
-    df["Friday"] = df["Weekday"] == 4
-    df["Saturday"] = df["Weekday"] == 5
-    df["Sunday"] = df["Weekday"] == 6
+    df[dayColumns] = df[dayColumns].replace({True: 1, False: 0})
     
     # Calculate days since last salary
     df["DaysSinceSalary"] = df["Date"].apply(lambda dt: daysSinceSalary(dt))
 
-    #fdsfgds
-    holidayData = holiday()
-    df["Holiday"] = df["Date"].apply(lambda dt: determineHoliday(dt, holidayData))
-    
-    # Determine season
-    # df["Season"] = df["Date"].apply(lambda dt: season(dt))
-    
-    # Include weather data
-    tempData = cleanTempData()
-    df["Temperature"] = df["Date"].apply(lambda dt: getTemperature(dt, tempData))
+    df["Season"] = df["Date"].apply(lambda dt: seasonForDate(dt))
 
-    # precipData = cleanPrecipData()
-    # df["Precipitation"] = df["Date"].apply(lambda dt: getPrecipitation(dt, prepData))
+    if fillMissingSales == True:
+        if "Sales" in df.columns:
+            # This will get the mean for that company on that weekday
+            # @todo
+            # Maybe we should do only (previous current and next month) to make it more go with the seasons
+            # or perhaps only X last weeks and Y next weeks?
+            #
+            # I found to categorise by weekday, company (and possiblt season) to be the most accurate
+            # I tried to include the year as well, but this does not work for company 0 and 2023 for both comp. 0 and 1
+            # (for company 0 several values are still missing if year is included, partly due to it being closed every sunday in the winter of 2022
+            # which means no estimations can be made)
+
+            # both of these implementations have the same results but one might be easier to use to get X/Y last/next weeks
+            # df['Sales'] = df['Sales'].fillna(df.groupby(['Weekday', 'Company', 'Season'])['Sales'].transform('mean'))
+            df['Sales'] = df.groupby(['Weekday', 'Company', 'Season'])['Sales'].transform(lambda x: x.fillna(x.mean()))
+
+    # For computation, sometimes the holiday and weather data is not required
+    if advancedFeatures == True:
+        # Include holiday data
+        holidayData = holiday()
+        df["Holiday"] = df["Date"].apply(lambda dt: determineHoliday(dt, holidayData))
+        
+        # Include weather data
+        tempData = cleanTempData()
+        df["Temperature"] = df["Date"].apply(lambda dt: getTemperature(dt, tempData))
+
+        # Include precipitation data
+        precipData = cleanPrecipData()
+        df["Precipitation"] = df["Date"].apply(lambda dt: getPrecipitation(dt, precipData))
     
     # Drop date column as the model should not use it
     # df = df.drop(["Date"], axis = 1)
@@ -123,14 +139,59 @@ def processDate(df):
     # Sort the dataset, by date and by company
     df.sort_values(by = ["Date", "Company"], inplace = True)
 
-    df = df.drop(["Weekday"], axis = 1)
+    # @Todo, should we also drop "Day"? We now have daysSinceSalary, which day of the week and whether it is a holiday
+    # But it can be usefull to identify the date of it if we run into trouble somewhere...
+    df = df.drop(["Weekday", "Date", "Day", "Season"], axis = 1)
     
     return df
 
 
-def season(today):
+def seasonForDate(today):
+    # spring = 0
+    # summer = 1
+    # fall = 2
+    # winter = 3
+
+    # using seasonal dates from
+    # https://www.calendardate.com/year2023.php
+
     # No clear implementation for season in Sweden yet
-    return 
+    if today.year == 2020:
+        if today.month < 3 or (today.month == 3 and today.day < 19):
+            return 3
+        elif today.month < 6 or (today.month == 6 and today.day < 20):
+            return 0
+        elif today.month < 9 or (today.month == 9 and today.day < 22):
+            return 1
+        elif today.month < 12 or (today.month == 12 and today.day < 21):
+            return 2
+        else:
+            return 3
+    elif today.year == 2021:
+        if today.month < 3 or (today.month == 3 and today.day < 20):
+            return 3
+        elif today.month < 6 or (today.month == 6 and today.day < 20):
+            return 0
+        elif today.month < 9 or (today.month == 9 and today.day < 22):
+            return 1
+        elif today.month < 12 or (today.month == 12 and today.day < 21):
+            return 2
+        else:
+            return 3
+    elif today.year == 2022:
+        if today.month < 3 or (today.month == 3 and today.day < 20):
+            return 3
+        elif today.month < 6 or (today.month == 6 and today.day < 21):
+            return 0
+        elif today.month < 9 or (today.month == 9 and today.day < 22):
+            return 1
+        elif today.month < 12 or (today.month == 12 and today.day < 21):
+            return 2
+        else:
+            return 3
+    elif today.year == 2023:
+        # Data stops before march, thus only winter is possible in 2023
+        return 3
 
 def addMissingDates(df, date_range):
     ### Add NaN sales for dates that do not exist in current range
@@ -152,39 +213,44 @@ def addMissingDates(df, date_range):
     return df
 
 
+def getFeaturedData(fillMissingSales = True, generateFiles = True, advancedFeatures = True):
+    # The date range of the data
+    salesRange = pd.date_range(start = "2020-01-01", end = "2023-01-04")
 
-# The date range of the data
-salesRange = pd.date_range(start = "2020-01-01", end = "2023-01-04")
+    # File names
+    historical_set = "caspecoHistoricalData.csv"
+    predict_set = "caspecoTestRange.csv"
 
-# File names
-historical_set = "caspecoHistoricalData.csv"
-predict_set = "caspecoTestRange.csv"
-processed_set = "caspecoHistoricalDataProcessed.csv" # this file will include all the processed features
-
-
-
-hist_df = pd.read_csv(historical_set)
-# test_df = pd.read_csv(test_set)
-
-hist_df = addMissingDates(hist_df, date_range = salesRange) # add missing dates
-
-hist_df = processDate(hist_df) # feature engineer with respect to date
-# test_df = processDate(test_df)
-
-hist_x = hist_df.loc[:, hist_df.columns != "Sales"]
-hist_y = hist_df.loc[:, hist_df.columns == "Sales"]
-
-hist_df.to_csv(processed_set, index=False)
-
-# Just to get an overview of what the data currently looks like
-print(hist_x.head())
-#print(hist_y.head())
+    processed_historical_set = "caspecoHistoricalDataProcessed.csv" # this file will include all the processed features
+    processed_predict_set = "caspecoTestRangeProcessed.csv" # this file will include all the processed features
 
 
-# missingSales = hist_x[hist_y["Sales"].isnull()]
 
-# print(f"There are missing values for {len(missingSales['Date'].unique())} dates\n")
-# # Missing values for 
-# for i in range(2):
-#     print(f"For company {i} the following dates are missing")
-#     print(missingSales[missingSales["Company"] == i]["Date"])
+    hist_df = pd.read_csv(historical_set)
+    predict_df = pd.read_csv(predict_set)
+
+    hist_df = addMissingDates(hist_df, date_range = salesRange) # add missing dates
+
+    hist_df = processFeatures(hist_df, advancedFeatures = advancedFeatures, fillMissingSales = fillMissingSales) # feature engineer with respect to date
+    predict_df = processFeatures(predict_df, advancedFeatures = advancedFeatures)
+
+    # hist_x = hist_df.loc[:, hist_df.columns != "Sales"]
+    # hist_y = hist_df.loc[:, hist_df.columns == "Sales"]
+
+    if generateFiles == True:
+        hist_df.to_csv(processed_historical_set, index = False)
+        predict_df.to_csv(processed_predict_set, index = False)
+
+    else:
+        return hist_df
+
+    missingSales = hist_df[hist_df["Sales"].isnull()]
+
+    # print(f"There are missing values for {len(missingSales['Date'].unique())} dates\n")
+    # Missing values for 
+    for i in range(3):
+        print(f"For company {i} the following dates are missing")
+        print(missingSales[missingSales["Company"] == i][["Year", "Month"]])
+
+if __name__ == '__main__':
+    getFeaturedData(advancedFeatures = True)
