@@ -124,6 +124,10 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
         # Include holiday data
         holidayData = holiday()
         df["Holiday"] = df["Date"].apply(lambda dt: determineHoliday(dt, holidayData))
+
+        df["NoHoliday"] = (df["Holiday"] == 0).astype("int")
+        df["ImHoliday"] = (df["Holiday"] == 2).astype("int")
+        df["Holiday"] = (df["Holiday"] == 1).astype("int")
         
         # Include weather data
         tempData = cleanTempData()
@@ -141,7 +145,8 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
 
     # @Todo, should we also drop "Day"? We now have daysSinceSalary, which day of the week and whether it is a holiday
     # But it can be usefull to identify the date of it if we run into trouble somewhere...
-    df = df.drop(["Weekday", "Date", "Day", "Season"], axis = 1)
+    # df = df.drop(["Weekday", "Date", "Day", "Season"], axis = 1)
+    df = df.drop(["Weekday", "Date"], axis = 1)
     
     return df
 
