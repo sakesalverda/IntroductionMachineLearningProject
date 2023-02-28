@@ -14,7 +14,7 @@ dfObject = {
     2:  df[df["Company"] == 2]
 }
 
-output_df = pd.read_csv("caspecoTestRange.csv")
+output_df = pd.read_csv("caspecoTestRange_sorted.csv")
 
 for company in range(3):
     dfComp = dfObject[company]
@@ -31,19 +31,19 @@ for company in range(3):
     prediction = model.predict(x_predict)
 
     # We flip since x_predict is from first till last date, whereas the output_df is from last till first date
-    output_df.loc[output_df["Company"] == company, "Sales"] = np.flip(prediction)
+    output_df.loc[output_df["Company"] == company, "Sales"] = prediction
 
 
-    # time_range = np.concatenate((y_train.tail(100).values, prediction))
+    time_range = np.concatenate((y_train.tail(20).values, prediction))
 
-    # plt.figure()
-    # plt.plot(time_range)
-    # plt.show()
+    plt.figure()
+    plt.plot(time_range)
+    plt.show()
 
     # print(prediction)
 
 output_df["ID"] = output_df['Date'] + "_" + output_df['Company'].astype(str)
     
 
-output_df.to_csv("Predictions/SimpleLinRegPrediction.csv", sep = ",", index = False, columns = ['ID', 'Sales'])
+# output_df.to_csv("Predictions/SimpleLinRegPrediction.csv", sep = ",", index = False, columns = ['ID', 'Sales'])
 print(output_df.head(10))
