@@ -143,12 +143,17 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
     # Sort the dataset, by date and by company
     df.sort_values(by = ["Date", "Company"], inplace = True)
 
+
+    # Here we can add lag
+    df = addLag(df)
+
     # @Todo, should we also drop "Day"? We now have daysSinceSalary, which day of the week and whether it is a holiday
     # But it can be usefull to identify the date of it if we run into trouble somewhere...
     # df = df.drop(["Weekday", "Date", "Day", "Season"], axis = 1)
     df = df.drop(["Weekday", "Date"], axis = 1)
     
     return df
+
 
 
 def seasonForDate(today):
@@ -198,6 +203,29 @@ def seasonForDate(today):
         # Data stops before march, thus only winter is possible in 2023
         return 3
 
+def addLag(df):
+    # FOr the historical data there is sales data
+    # for the prediction set there is no sales data
+    if "Sales" in df.columns:
+        df["Lag7"] = df["Sales"]
+        df["Lag7"].shift(21) # 7*3
+
+        df["Lag1"] = df["Sales"]
+        df["Lag1"].shift(3)
+    else:
+        # @important / @todo
+        # Due to the lag we should predict per day and not all days at once
+        # when that day is predicted, the lag1 for the next day is just that prediction
+        # and lag7 is the sales data for 7 days earlier, which could either be a prediction
+        # or a sales in the historical data
+        df["Lag7"] = 0
+        df["Lag1"] = 0
+
+    df.dropna() 
+
+    return df
+
+
 def addMissingDates(df, date_range):
     ### Add NaN sales for dates that do not exist in current range
     ### These values will later be filled
@@ -224,7 +252,7 @@ def getFeaturedData(fillMissingSales = True, generateFiles = True, advancedFeatu
 
     # File names
     historical_set = "caspecoHistoricalData.csv"
-    predict_set = "caspecoTestRange.csv"
+    predict_set = "caspecoTestRange_sorted.csv"
 
     processed_historical_set = "caspecoHistoricalDataProcessed.csv" # this file will include all the processed features
     processed_predict_set = "caspecoTestRangeProcessed.csv" # this file will include all the processed features

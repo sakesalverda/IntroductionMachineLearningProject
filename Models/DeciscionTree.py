@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
 import datetime as dt
-from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import TimeSeriesSplit
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+#from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import matplotlib.pyplot as plt
 
@@ -40,40 +43,22 @@ for company in range(1):
         print(len(x_train_split))
 
         #Linear Regression
-        model = LinearRegression()
-        model.fit(x_train_split, y_train_split)
 
-        prediction = model.predict(x_test_split)
+        #dt_reg = DecisionTreeRegressor(random_state=42)
+        #dt_reg.fit(X=x_train_split, y=y_train_split)
 
-        score = model.score(x_test_split, y_test_split)
-        mse = mean_squared_error(y_test_split, prediction)
+        #dt_pred = dt_reg.predict(x_test_split)
+
+        gbr = GradientBoostingRegressor(random_state=42)
+        gbr.fit(x_train_split, y=y_train_split.ravel())
+        gbr_pred = gbr.predict(x_test_split)
+
+        score = gbr.score(x_test_split, y_test_split)
+        mse = mean_squared_error(y_test_split, gbr_pred)
+
 
         print(f"  Score: {score}")
         print(f"  MSE: {mse}")
 
 
 
-
-    # x_predict = dfCompPredict.drop(["Day", "Season"], axis = 1)
-
-    # model = LinearRegression()
-    # model.fit(x_train, y_train)
-
-    # prediction = model.predict(x_predict)
-
-    # output_df.loc[output_df["Company"] == company, "Sales"] = prediction
-
-
-    # time_range = np.concatenate((y_train.tail(20).values, prediction))
-
-    # plt.figure()
-    # plt.plot(time_range)
-    # plt.show()
-
-    # print(prediction)
-
-output_df["ID"] = output_df['Date'] + "_" + output_df['Company'].astype(str)
-    
-
-# output_df.to_csv("Predictions/SimpleLinRegPrediction.csv", sep = ",", index = False, columns = ['ID', 'Sales'])
-print(output_df.head(10))
