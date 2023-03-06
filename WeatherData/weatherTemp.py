@@ -23,10 +23,10 @@ def _timeToInt(df):
     df.drop(columns="Tid (UTC)", inplace=True)
     df['Hour'] = df['Hour'].astype(int)
 
-def _meanTemp(df):
-    df_mean = df.groupby(["Year","Month","Day"], group_keys = False,as_index = False).mean() 
-    df_mean.drop(columns="Hour", inplace=True)
-    return df_mean
+def _maxTemp(df):
+    df_max = df.groupby(["Year","Month","Day"], group_keys = False, as_index = False).max() 
+    df_max.drop(columns="Hour", inplace=True)
+    return df_max
 
 '''
 Concatenate historical and recent Temp, 
@@ -58,10 +58,10 @@ def cleanTempData():
     dfAll = pd.concat([dfTempHist, dfTempRecent]).drop_duplicates() 
 
     # Get timespan (10-20)
-    _getTimeperiod(dfAll)
+    #_getTimeperiod(dfAll)
  
-    # Get mean of each day
-    dfAll = _meanTemp(dfAll)
+    # Get max temp of each day
+    dfAll = _maxTemp(dfAll)
 
     return dfAll
                     

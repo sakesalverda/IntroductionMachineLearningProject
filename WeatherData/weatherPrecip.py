@@ -23,10 +23,10 @@ def _timeToInt(df):
     df.drop(columns="Tid (UTC)", inplace=True)
     df['Hour'] = df['Hour'].astype(int)
 
-def _meanPrecip(df):
-    df_mean = df.groupby(["Year","Month","Day"], group_keys = False,as_index = False).mean() 
-    df_mean.drop(columns="Hour", inplace=True)
-    return df_mean
+def _sumPrecip(df):
+    df_sum = df.groupby(["Year","Month","Day"], group_keys = False,as_index = False).sum() 
+    df_sum.drop(columns="Hour", inplace=True)
+    return df_sum
 
 '''
 Concatenate historical and recent Temp, 
@@ -60,8 +60,8 @@ def cleanPrecipData():
     # Get timespan (10-20)
     _getTimeperiod(dfAll)
  
-    # Get mean of each day
-    dfAll = _meanPrecip(dfAll)
+    # Get sum of each day
+    dfAll = _sumPrecip(dfAll)
 
     return dfAll
 

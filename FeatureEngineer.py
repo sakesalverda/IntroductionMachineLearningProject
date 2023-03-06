@@ -92,11 +92,11 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
     df["Day"] = df["Date"].dt.day
     df["Weekday"] = df["Date"].dt.weekday
 
-    dayColumns = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    for (idx, dayColumn) in enumerate(dayColumns):
-        df[dayColumn] = df["Weekday"] == idx
-
-    df[dayColumns] = df[dayColumns].replace({True: 1, False: 0})
+    # dayColumns = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    # for (idx, dayColumn) in enumerate(dayColumns):
+    #     df[dayColumn] = df["Weekday"] == idx
+    # 
+    # df[dayColumns] = df[dayColumns].replace({True: 1, False: 0})
     
     # Calculate days since last salary
     df["DaysSinceSalary"] = df["Date"].apply(lambda dt: daysSinceSalary(dt))
@@ -125,9 +125,9 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
         holidayData = holiday()
         df["Holiday"] = df["Date"].apply(lambda dt: determineHoliday(dt, holidayData))
 
-        df["NoHoliday"] = (df["Holiday"] == 0).astype("int")
-        df["ImHoliday"] = (df["Holiday"] == 2).astype("int")
-        df["Holiday"] = (df["Holiday"] == 1).astype("int")
+        # df["NoHoliday"] = (df["Holiday"] == 0).astype("int")
+        # df["ImHoliday"] = (df["Holiday"] == 2).astype("int")
+        # df["Holiday"] = (df["Holiday"] == 1).astype("int")
         
         # Include weather data
         tempData = cleanTempData()
@@ -143,14 +143,16 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
     # Sort the dataset, by date and by company
     df.sort_values(by = ["Date", "Company"], inplace = True)
 
+    # df["SalesNextDay"] = df.groupby("Company")["Sales"].shift(-1)
 
-    # Here we can add lag
-    df = addLag(df)
+    # Here we can add lag, we DON'T implement that here due to data leakage
+    # df = addLag(df)
 
     # @Todo, should we also drop "Day"? We now have daysSinceSalary, which day of the week and whether it is a holiday
     # But it can be usefull to identify the date of it if we run into trouble somewhere...
     # df = df.drop(["Weekday", "Date", "Day", "Season"], axis = 1)
-    df = df.drop(["Weekday", "Date"], axis = 1)
+    # df = df.drop(["Weekday", "Date"], axis = 1)
+    df = df.drop(["Date"], axis = 1)
     
     return df
 
@@ -203,27 +205,7 @@ def seasonForDate(today):
         # Data stops before march, thus only winter is possible in 2023
         return 3
 
-def addLag(df):
-    # FOr the historical data there is sales data
-    # for the prediction set there is no sales data
-    if "Sales" in df.columns:
-        df["Lag7"] = df["Sales"]
-        df["Lag7"].shift(21) # 7*3
 
-        df["Lag1"] = df["Sales"]
-        df["Lag1"].shift(3)
-    else:
-        # @important / @todo
-        # Due to the lag we should predict per day and not all days at once
-        # when that day is predicted, the lag1 for the next day is just that prediction
-        # and lag7 is the sales data for 7 days earlier, which could either be a prediction
-        # or a sales in the historical data
-        df["Lag7"] = 0
-        df["Lag1"] = 0
-
-    df.dropna() 
-
-    return df
 
 
 def addMissingDates(df, date_range):
