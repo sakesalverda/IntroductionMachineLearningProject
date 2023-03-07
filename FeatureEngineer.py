@@ -137,6 +137,12 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
         precipData = cleanPrecipData()
         df["Precipitation"] = df["Date"].apply(lambda dt: getPrecipitation(dt, precipData))
     
+    # Scale sales, does not work for predictions set!
+    if "Sales" in df.columns:
+        g = df.groupby('Company')["Sales"]
+        min_, max_ = g.transform('min'), g.transform('max')
+        df["SalesScaled"] = (df["Sales"] - min_) / (max_ - min_)
+
     # Drop date column as the model should not use it
     # df = df.drop(["Date"], axis = 1)
     
@@ -153,6 +159,8 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
     # df = df.drop(["Weekday", "Date", "Day", "Season"], axis = 1)
     # df = df.drop(["Weekday", "Date"], axis = 1)
     df = df.drop(["Date"], axis = 1)
+    if "Sales" in df.columns:
+        df = df.drop(["Sales"], axis = 1)
     
     return df
 
@@ -259,7 +267,10 @@ def getFeaturedData(fillMissingSales = True, generateFiles = True, advancedFeatu
     else:
         return hist_df
 
-    missingSales = hist_df[hist_df["Sales"].isnull()]
+    if "Sales" in hist_df.columns:
+        missingSales = hist_df[hist_df["Sales"].isnull()]
+    elif "SalesScaled" in hist_df.columns:
+        missingSales = hist_df[hist_df["SalesScaled"].isnull()]
 
     # print(f"There are missing values for {len(missingSales['Date'].unique())} dates\n")
     # Missing values for 
