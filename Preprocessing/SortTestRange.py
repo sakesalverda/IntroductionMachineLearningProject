@@ -1,5 +1,7 @@
 import pandas as pd
 
+# This file sorts the prediction range such that it starts with the first date and ends with the last date
+
 predict_set = "caspecoTestRange.csv"
 
 predict_df = pd.read_csv(predict_set)

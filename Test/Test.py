@@ -10,5 +10,7 @@ g = df.groupby('Company')[cols]
 min_, max_ = g.transform('min'), g.transform('max')
 df[cols + '_scale'] = (df[cols] - min_) / (max_ - min_)
 
+# print(min_, max_)
+
 print(df.head())
 # df["Sales"] = grouped["Sales"] - grouped["Sales"].min() / (grouped["Sales"].max() - grouped["Sales"].min())

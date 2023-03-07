@@ -138,6 +138,7 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
         df["Precipitation"] = df["Date"].apply(lambda dt: getPrecipitation(dt, precipData))
     
     # Scale sales, does not work for predictions set!
+    # source: https://www.appsloveworld.com/pandas/100/45/group-by-minmaxscaler-in-pandas-dataframe
     if "Sales" in df.columns:
         g = df.groupby('Company')["Sales"]
         min_, max_ = g.transform('min'), g.transform('max')
@@ -158,12 +159,11 @@ def processFeatures(df, advancedFeatures = True, fillMissingSales = True):
     # But it can be usefull to identify the date of it if we run into trouble somewhere...
     # df = df.drop(["Weekday", "Date", "Day", "Season"], axis = 1)
     # df = df.drop(["Weekday", "Date"], axis = 1)
-    df = df.drop(["Date"], axis = 1)
+    # df = df.drop(["Date"], axis = 1)
     if "Sales" in df.columns:
         df = df.drop(["Sales"], axis = 1)
     
     return df
-
 
 
 def seasonForDate(today):
