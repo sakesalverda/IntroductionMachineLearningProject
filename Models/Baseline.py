@@ -4,7 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from Helpers.metrics import error_metrics
-from Helpers.df import split_df, add_prediction_to_df, get_train_vars_df
+from Helpers.df import split_df, add_prediction_to_df, get_train_vars_df, one_hot_encode_df
+from Helpers.model import plot
 
 from sklearn.linear_model import LinearRegression
 
@@ -15,6 +16,8 @@ df = pd.read_csv("caspecoHistoricalDataProcessed.csv")
 
 
 # 2) Add features, that are not sensitive to data leakage
+
+df = one_hot_encode_df(df)
 
 # skip since this is the baseline model
 
@@ -51,4 +54,8 @@ print(metrics)
 
 
 
-# 8) Use model to predict future set
+# 8) plot against actual, and perhaps baseline
+plot(validation_df, name = "Baseline")
+
+
+# 9) Use model to predict future set

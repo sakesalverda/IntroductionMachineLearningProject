@@ -9,14 +9,16 @@ def calculate_prediction_sales(row, columns = ["PredictionScaled", "SalesScaled"
     max_value = c_min_max[row["Company"]]["Max"]
     
     dict = {}
-
     for i in range(len(columns)):
         column = columns[i]
         to_scale = row[column]
-
         scaled = to_scale * (max_value - min_value) + min_value
-
         dict[i] = scaled
+
+    # dict = {column: to_scale * (max_value - min_value) + min_value
+    #               for i, column in enumerate(columns)
+    #               for to_scale in [row[column]]}
+    # return dict   # unnecessary hard to read code but would shorten line 11-16 plus return
 
 
     # predict_scaled = row["PredictionScaled"]

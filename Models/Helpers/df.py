@@ -8,6 +8,22 @@ df_drop_train_columns = ["Date", "SalesScaled"]
 validation_size = (4 * 7) * 3
 test_size = validation_size
 
+def one_hot_encode_df(df):
+    columns = ["Weekday", "Month", "Season", "Holiday"]
+
+    for column in columns:
+        df = pd.get_dummies(df, columns=[column], prefix = column, drop_first=False)
+        # one_hot = pd.get_dummies(data = df, prefix = column, columns = [column])
+
+        # print(one_hot)
+
+        # df = df.drop(column, axis = 1)
+        # df = df.join(one_hot)
+
+    return df
+
+
+
 def split_df(df):
     validation_df = df.tail(validation_size).copy()
     train_df = df.head(-validation_size).copy()

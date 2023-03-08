@@ -7,6 +7,14 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.model_selection import GridSearchCV
 
+
+# AUTO CORRELATION PLOT
+# from statsmodels.graphics.tsaplots import plot_acf
+# fig = plot_acf(df[df["Company"] == 0]["SalesScaled"], lags = 21)
+# plt.show()
+
+# exit()
+
 def weighted_mean_absolute_percentage_error(y_true, y_pred): 
     # y_true, y_pred = check_arrays(y_true, y_pred)
 

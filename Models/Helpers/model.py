@@ -6,10 +6,12 @@ from matplotlib.patches import Rectangle
 
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.model_selection import GridSearchCV
+from pactools.grid_search import GridSearchCVProgressBar
 
 from Helpers.df import get_train_vars_df
 from Helpers.df import test_size
 from Helpers.df import calculate_prediction_sales
+from Helpers.df import one_hot_encode_df
 
 simple_seasons = [
     len(pd.date_range(start = "2020-01-01", end = "2020-03-21")),
@@ -26,6 +28,16 @@ simple_seasons = [
     len(pd.date_range(start = "2022-09-22", end = "2022-12-21")),
     len(pd.date_range(start = "2022-12-22", end = "2023-01-04"))
 ]
+
+def add_lag_features(df):
+    df["SalesScaledLastDay"] = df.groupby("Company")["SalesScaled"].shift(1)
+    df["SalesScaledLastWeek"] = df.groupby("Company")["SalesScaled"].shift(7)
+    df["SalesRollingMeanWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7).mean()
+    df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean()
+    df["SalesRollingMean4Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7*4).mean()
+    df["SalesRollingDif"] = df.groupby("Company")["SalesScaled"].shift(1).diff()
+    df["SalesRollingDif7"] = df.groupby("Company")["SalesScaled"].shift(7).diff()
+    df["SalesRollingStdWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(10).std()
 
 def tunecv(train_x, train_y, model, param_grid):
     tscv = TimeSeriesSplit(n_splits = 5, test_size = test_size)
@@ -69,20 +81,22 @@ def plot(df, name):
 
 
 
-def forecast(model, name):
-    df_historical = pd.read_csv("caspecoHistoricalDataProcessed.csv").tail(n = 21*3) # 21 days
+def forecast(model, name, one_hot = False):
+    df_historical = pd.read_csv("caspecoHistoricalDataProcessed.csv")
     df_predict = pd.read_csv("caspecoTestRangeProcessed.csv")
 
     df = pd.concat([df_historical, df_predict])
 
+    if one_hot == True:
+        df = one_hot_encode_df(df)
+
+    df = df.tail(n = (7*12)*3)
+
     for i in range(15):
         # predict 15 times
 
-        # add lag features
-        df["SalesScaledLastDay"] = df.groupby("Company")["SalesScaled"].shift(1)
-        df["SalesScaledLastWeek"] = df.groupby("Company")["SalesScaled"].shift(7)
-        df["SalesRollingMeanWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7).mean()
-        df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean()
+        # add lag features, must be done per step as the sales of last time have just been predicted
+        add_lag_features(df)
 
         date = f"2023-01-{str(5+i).zfill(2)}"
 
@@ -100,7 +114,7 @@ def forecast(model, name):
     
     out_df = df.tail(15*3).copy()
 
-    out_df["Sales"] = out_df.apply(lambda row: calculate_prediction_sales(row, columns=["SalesScaled"]), axis = "columns",  result_type='expand')
+    out_df["Sales"] = out_df.apply(lambda row: calculate_prediction_sales(row, columns=["SalesScaled"]), axis = "columns", result_type='expand')
     out_df["ID"] = out_df["Date"] + "_" + out_df["Company"].astype(str)
 
     out_df.to_csv(f"Output/Forecast/CSV/{name}.csv", sep = ",", index = False, columns = ['ID', 'Sales'])

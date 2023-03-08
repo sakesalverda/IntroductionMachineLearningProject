@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from Helpers.metrics import error_metrics
 from Helpers.df import split_df, add_prediction_to_df, get_train_vars_df
-from Helpers.model import tunecv, forecast, plot
+from Helpers.model import tunecv, forecast, plot, add_lag_features
 
 from sklearn.ensemble import RandomForestRegressor
 
@@ -14,22 +14,11 @@ from sklearn.ensemble import RandomForestRegressor
 df = pd.read_csv("caspecoHistoricalDataProcessed.csv")
 
 
-
 # 2) Add features, that are not sensitive to data leakage
 
-df["SalesScaledLastDay"] = df.groupby("Company")["SalesScaled"].shift(1)
-df["SalesScaledLastWeek"] = df.groupby("Company")["SalesScaled"].shift(7)
-df["SalesRollingMeanWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7).mean()
-df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean()
+add_lag_features(df)
 
 df.dropna(inplace=True)
-
-
-# from statsmodels.graphics.tsaplots import plot_acf
-# fig = plot_acf(df[df["Company"] == 0]["SalesScaled"], lags = 21)
-# plt.show()
-
-# exit()
 
 
 
@@ -39,7 +28,7 @@ train_df, validation_df = split_df(df)
 
 
 # 4) Optimise hyperparamaters
-# param_grid = {'max_depth' : [3, 5]}
+# param_grid = {'max_depth' : [3, 5, 7]}
 # param_grid = {'n_estimators': np.arange(50, 200, 15),
 #               'max_features': np.arange(0.1, 1, 0.1),
 #               'max_depth': [3, 5, 7, 9],
@@ -49,12 +38,15 @@ train_df, validation_df = split_df(df)
 # cv_rfr = tunecv(get_train_vars_df(train_df), train_df["SalesScaled"], rfr, param_grid = param_grid)
 
 # print(cv_rfr.best_params_)
+# output: {'max_depth': 9, 'max_features': 0.5, 'max_samples': 0.8, 'n_estimators': 50}
 
 # exit() # use during hyper paramater testing
 
 # 5) Train on entire train_df using optimised hyper paramaters
 
-model = RandomForestRegressor(max_depth = 9, max_features =  0.30000000000000004, n_estimators = 500, random_state = 8)
+# best_params_grid = {"max_depth": 9, "max_features": 0.3, "n_estimators": 500}
+best_params_grid = {'max_depth': 9, 'max_features': 0.5, 'max_samples': 0.8, 'n_estimators': 50}
+model = RandomForestRegressor(**best_params_grid, random_state = 8)
 model.fit(get_train_vars_df(train_df), train_df["SalesScaled"])
 
 
@@ -78,4 +70,6 @@ plot(validation_df, name = "RandomForest")
 
 
 # 9) Use model to predict future set
+model = RandomForestRegressor(**best_params_grid, random_state = 8)
+model.fit(get_train_vars_df(df), df["SalesScaled"])
 forecast(model, name = "RandomForest")
