@@ -19,8 +19,8 @@ df = pd.read_csv("caspecoHistoricalDataProcessed.csv")
 
 df["SalesScaledLastDay"] = df.groupby("Company")["SalesScaled"].shift(1)
 df["SalesScaledLastWeek"] = df.groupby("Company")["SalesScaled"].shift(7)
-df["SalesRollingMeanWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7).mean().reset_index(0, drop = True)
-df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean().reset_index(0, drop = True)
+df["SalesRollingMeanWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7).mean()
+df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean()
 
 df.dropna(inplace=True)
 
@@ -54,7 +54,7 @@ train_df, validation_df = split_df(df)
 
 # 5) Train on entire train_df using optimised hyper paramaters
 
-model = RandomForestRegressor(max_depth = 9, max_features =  0.30000000000000004, n_estimators =  500)
+model = RandomForestRegressor(max_depth = 9, max_features =  0.30000000000000004, n_estimators = 500, random_state = 8)
 model.fit(get_train_vars_df(train_df), train_df["SalesScaled"])
 
 

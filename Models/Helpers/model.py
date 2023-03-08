@@ -70,46 +70,37 @@ def plot(df, name):
 
 
 def forecast(model, name):
-    df = pd.read_csv("caspecoHistoricalDataProcessed.csv")
+    df_historical = pd.read_csv("caspecoHistoricalDataProcessed.csv").tail(n = 21*3) # 21 days
     df_predict = pd.read_csv("caspecoTestRangeProcessed.csv")
 
-    df["SalesScaledLastDay"] = df.groupby("Company")["SalesScaled"].shift(1)
-    df["SalesScaledLastWeek"] = df.groupby("Company")["SalesScaled"].shift(7)
-    df["SalesRollingMeanWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7).mean().reset_index(0, drop = True)
-    df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean().reset_index(0, drop = True)
-
-    df = df.tail(n = 21*3)
-
-    df = pd.concat([df, df_predict])
-
-    # print(df)
+    df = pd.concat([df_historical, df_predict])
 
     for i in range(15):
         # predict 15 times
-        for company in range(3):
-            row = df[df["Company"] == company].head(21 + i + 1).tail(1)
-            # row = df.loc[(df["Date"] == row["Date"].values[0]) & (df["Company"] == row["Company"].values[0]), :]
 
-            row["SalesScaledLastDay"] = df[df["Company"] == company].head(21 + i + 1 - 1).tail(1)["SalesScaled"].values
-            row["SalesScaledLastWeek"] = df[df["Company"] == company].head(21 + i + 1 - 7).tail(1)["SalesScaled"].values
-            row["SalesRollingMeanWeek"] = df[df["Company"] == company].head(21 + i + 1 - 7).tail(7)["SalesScaled"].mean()
-            row["SalesRollingMean2Week"] = df[df["Company"] == company].head(21 + i + 1 - 14).tail(14)["SalesScaled"].mean()
+        # add lag features
+        df["SalesScaledLastDay"] = df.groupby("Company")["SalesScaled"].shift(1)
+        df["SalesScaledLastWeek"] = df.groupby("Company")["SalesScaled"].shift(7)
+        df["SalesRollingMeanWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7).mean()
+        df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean()
+
+        date = f"2023-01-{str(5+i).zfill(2)}"
+
+        for company in range(3):
+            # get the row to forecast
+            # row = df[df["Company"] == company].head(21 + i + 1).tail(1)
+            row = df[(df["Date"] == date) & (df["Company"] == company)]
 
             y_pred = model.predict(get_train_vars_df(row))[0]
 
             # row["SalesScaled"] = y_pred
             # df.iloc[21*3 + i*3 + company, "SalesScaled"] = y_pred
-            df.loc[(df["Date"] == row["Date"].values[0]) & (df["Company"] == row["Company"].values[0]), "SalesScaled"] = y_pred
+            df.loc[(df["Date"] == date) & (df["Company"] == company), "SalesScaled"] = y_pred
             # row["SalesScaled"] = y_pred
     
-    predicted_df = df.tail(15*3).copy()
+    out_df = df.tail(15*3).copy()
 
-    # predicted_df.insert(len(predicted_df.columns), "Sales", predicted_df.apply(lambda row: calculate_prediction_sales(row, columns=["SalesScaled"]), axis = "columns",  result_type='expand'))
+    out_df["Sales"] = out_df.apply(lambda row: calculate_prediction_sales(row, columns=["SalesScaled"]), axis = "columns",  result_type='expand')
+    out_df["ID"] = out_df["Date"] + "_" + out_df["Company"].astype(str)
 
-    predicted_df["Sales"] = predicted_df.apply(lambda row: calculate_prediction_sales(row, columns=["SalesScaled"]), axis = "columns",  result_type='expand')
-    predicted_df["ID"] = predicted_df["Date"] + "_" + predicted_df["Company"].astype(str)
-
-    print(predicted_df["ID"])
-    predicted_df.to_csv(f"Output/Forecast/CSV/{name}.csv", sep = ",", index = False, columns = ['ID', 'Sales'])
-
-    # print(predicted_df.tail(15*3)["Sales"])
+    out_df.to_csv(f"Output/Forecast/CSV/{name}.csv", sep = ",", index = False, columns = ['ID', 'Sales'])
