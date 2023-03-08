@@ -33,16 +33,16 @@ def add_lag_features(df):
     df["SalesScaledLastDay"] = df.groupby("Company")["SalesScaled"].shift(1)
     df["SalesScaledLastWeek"] = df.groupby("Company")["SalesScaled"].shift(7)
     df["SalesRollingMeanWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7).mean()
-    df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean()
+    # df["SalesRollingMean2Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(14).mean() # results in more inacurate
     df["SalesRollingMean4Week"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(7*4).mean()
     df["SalesRollingDif"] = df.groupby("Company")["SalesScaled"].shift(1).diff()
     df["SalesRollingDif7"] = df.groupby("Company")["SalesScaled"].shift(7).diff()
-    df["SalesRollingStdWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(10).std()
+    # df["SalesRollingStdWeek"] = df.groupby("Company")["SalesScaled"].shift(1).rolling(10).std() # results in more inacurate
 
 def tunecv(train_x, train_y, model, param_grid):
     tscv = TimeSeriesSplit(n_splits = 5, test_size = test_size)
     
-    CV_gs = GridSearchCV(estimator = model, param_grid = param_grid, cv = tscv, verbose = 2)
+    CV_gs = GridSearchCV(estimator = model, param_grid = param_grid, cv = tscv, verbose = 2, n_jobs = -1)
     CV_gs.fit(train_x, train_y)
 
     return CV_gs

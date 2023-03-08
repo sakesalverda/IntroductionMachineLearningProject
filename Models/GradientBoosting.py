@@ -7,10 +7,11 @@ from Helpers.metrics import error_metrics
 from Helpers.df import split_df, add_prediction_to_df, get_train_vars_df, one_hot_encode_df
 from Helpers.model import tunecv, forecast, plot, add_lag_features
 
-from sklearn.ensemble import RandomForestRegressor as Regressor
+from sklearn.ensemble import GradientBoostingRegressor as Regressor
 
-identifier = "RandomForest"
+identifier = "GradientBoosting"
 linearModel = False
+
 
 # 1) Read the dataframe
 df = pd.read_csv("caspecoHistoricalDataProcessed.csv")
@@ -33,25 +34,20 @@ train_df, validation_df = split_df(df)
 
 
 # 4) Optimise hyperparamaters
-# param_grid = {'max_depth' : [3, 5, 7]}
-# param_grid = {'n_estimators': np.arange(50, 200, 15),
-#               'max_features': np.arange(0.1, 1, 0.1),
-#               'max_depth': [3, 5, 7, 9],
-#               'max_samples': [0.3, 0.5, 0.8]}
-param_grid = {"max_depth": range(5, 30, 5), "min_samples_leaf": range(1, 30, 2), "n_estimators": range(100, 2000, 200)}
+# param_grid = {"learning_rate": [0.001, 0.01, 0.1], "n_estimators": range(1000, 3000, 200)}
 
 # rfr = Regressor(random_state = 8)
 # cv_rfr = tunecv(get_train_vars_df(train_df), train_df["SalesScaled"], rfr, param_grid = param_grid)
 
 # print(cv_rfr.best_params_)
-# output: {'max_depth': 9, 'max_features': 0.5, 'max_samples': 0.8, 'n_estimators': 50}
+# # output: {'learning_rate': 0.01, 'n_estimators': 2800}
 
 # exit() # use during hyper paramater testing
 
 # 5) Train on entire train_df using optimised hyper paramaters
 
 # best_params_grid = {"max_depth": 9, "max_features": 0.3, "n_estimators": 500}
-best_params_grid = {'max_depth': 9, 'max_features': 0.5, 'max_samples': 0.8, 'n_estimators': 50}
+best_params_grid = {'learning_rate': 0.01, 'n_estimators': 2800}
 model = Regressor(**best_params_grid, random_state = 8)
 model.fit(get_train_vars_df(train_df), train_df["SalesScaled"])
 

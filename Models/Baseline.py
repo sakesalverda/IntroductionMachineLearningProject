@@ -9,6 +9,8 @@ from Helpers.model import plot
 
 from sklearn.linear_model import LinearRegression
 
+identifier = "Baseline"
+
 
 # 1) Read the dataframe
 df = pd.read_csv("caspecoHistoricalDataProcessed.csv")
@@ -55,7 +57,7 @@ print(metrics)
 
 
 # 8) plot against actual, and perhaps baseline
-plot(validation_df, name = "Baseline")
+plot(validation_df, name = identifier)
 
 
 # 9) Use model to predict future set
