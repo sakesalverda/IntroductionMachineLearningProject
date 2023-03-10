@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 
+from Helpers.df import get_rows_for_company_df
+
 def weighted_mean_absolute_percentage_error(y_true, y_pred): 
     y_true = y_true.values
     y_pred = y_pred.values
@@ -27,10 +29,11 @@ def error_metrics(df):
     mae[0] = mean_absolute_error(df["Prediction"], df["Sales"])
 
     for i in range(3):
-        rmse[i + 1] = mean_squared_error(df[df["Company"] == i]["Prediction"], df[df["Company"] == i]["Sales"], squared = False)
-        wmape[i + 1] = weighted_mean_absolute_percentage_error(df[df["Company"] == i]["Prediction"], df[df["Company"] == i]["Sales"])
-        mape[i + 1] = mean_absolute_percentage_error(df[df["Company"] == i]["Prediction"], df[df["Company"] == i]["Sales"])
-        mae[i + 1] = mean_absolute_error(df[df["Company"] == i]["Prediction"], df[df["Company"] == i]["Sales"])
+        rows = get_rows_for_company_df(df, i)
+        rmse[i + 1] = mean_squared_error(df[rows]["Prediction"], df[df["Company"] == i]["Sales"], squared = False)
+        wmape[i + 1] = weighted_mean_absolute_percentage_error(df[rows]["Prediction"], df[df["Company"] == i]["Sales"])
+        mape[i + 1] = mean_absolute_percentage_error(df[rows]["Prediction"], df[df["Company"] == i]["Sales"])
+        mae[i + 1] = mean_absolute_error(df[rows]["Prediction"], df[df["Company"] == i]["Sales"])
 
     df = pd.DataFrame(data = {
         "Company": ["All", 0, 1, 2],

@@ -12,6 +12,7 @@ from Helpers.df import get_train_vars_df
 from Helpers.df import test_size
 from Helpers.df import calculate_prediction_sales
 from Helpers.df import one_hot_encode_df
+from Helpers.df import get_rows_for_company_df
 
 simple_seasons = [
     len(pd.date_range(start = "2020-01-01", end = "2020-03-21")),
@@ -59,9 +60,11 @@ def plot(df, name):
         ax = fig.add_subplot(3, 1, i + 1)
         ax.set_title(f"Sales company {i}")
         ax.ticklabel_format(style = "plain")
+
+        rows = get_rows_for_company_df(df, i)
         
-        sales = df[df["Company"] == i]["Sales"]
-        prediction = df[df["Company"] == i]["Prediction"]
+        sales = df[rows]["Sales"]
+        prediction = df[rows]["Prediction"]
         
         line_color = ""
         if i == 1:

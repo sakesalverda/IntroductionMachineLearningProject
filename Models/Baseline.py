@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 
 from Helpers.metrics import error_metrics
 from Helpers.df import split_df, add_prediction_to_df, get_train_vars_df, one_hot_encode_df
-from Helpers.model import plot
+from Helpers.model import plot, add_lag_features
 
 from sklearn.linear_model import LinearRegression
 
 identifier = "Baseline"
+linearModel = True
 
 
 # 1) Read the dataframe
@@ -19,9 +20,12 @@ df = pd.read_csv("caspecoHistoricalDataProcessed.csv")
 
 # 2) Add features, that are not sensitive to data leakage
 
-df = one_hot_encode_df(df)
+if linearModel == True:
+    df = one_hot_encode_df(df)
 
-# skip since this is the baseline model
+add_lag_features(df)
+
+df.dropna(inplace=True)
 
 
 
@@ -52,7 +56,7 @@ add_prediction_to_df(validation_df, y_pred)
 # 7) Calculate error metrics
 metrics = error_metrics(validation_df)
 
-print(metrics)
+print(metrics.to_latex(index=False))
 
 
 

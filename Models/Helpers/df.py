@@ -8,8 +8,16 @@ df_drop_train_columns = ["Date", "SalesScaled"]
 validation_size = (4 * 7) * 3
 test_size = validation_size
 
+def get_rows_for_company_df(df, company):
+    if "Company" in df.columns:
+        rows = df["Company"] == company
+    else:
+        rows = df[f"Company_{company}"] == 1
+    
+    return rows
+
 def one_hot_encode_df(df):
-    columns = ["Weekday", "Month", "Season", "Holiday"]
+    columns = ["Weekday", "Month", "Season", "Holiday", "Day", "DaysSinceSalary"]
 
     for column in columns:
         df = pd.get_dummies(df, columns=[column], prefix = column, drop_first=False)

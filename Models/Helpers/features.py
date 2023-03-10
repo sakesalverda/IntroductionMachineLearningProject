@@ -5,8 +5,19 @@ def calculate_prediction_sales(row, columns = ["PredictionScaled", "SalesScaled"
         1: {"Min": -45.04917947145333, "Max": 240464.1980553548},
         2: {"Min": 9958.738964463202, "Max": 1659719.698434384}
     }
-    min_value = c_min_max[row["Company"]]["Min"]
-    max_value = c_min_max[row["Company"]]["Max"]
+
+    if "Company" in row.index:
+        company = row["Company"]
+    else:
+        if row["Company_0"] == 1:
+            company = 0
+        elif row["Company_1"] == 1:
+            company = 1
+        else:
+            company = 2
+
+    min_value = c_min_max[company]["Min"]
+    max_value = c_min_max[company]["Max"]
     
     dict = {}
     for i in range(len(columns)):
