@@ -24,4 +24,4 @@ for i in range(3):
     plot_acf(df[df["Company"] == i]["SalesScaled"], lags = 7*4, ax = ax)
     plot_pacf(df[df["Company"] == i]["SalesScaled"], lags = 7*4, ax = ax2)
 # plt.show()
-plt.savefig("output/autocorrelation.png")
+plt.savefig("output/autocorrelation.png", bbox_inches='tight')

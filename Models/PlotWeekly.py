@@ -23,4 +23,4 @@ for i in range(3):
     ax.plot(df[df["Company"] == i].groupby("Weekday")["Sales"].mean())
 
 # plt.show()
-plt.savefig("output/weekly.png")
+plt.savefig("output/weekly.png", bbox_inches='tight')
