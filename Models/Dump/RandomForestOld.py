@@ -7,13 +7,21 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.model_selection import GridSearchCV
 
+df = pd.read_csv("caspecoHistoricalDataProcessed.csv")
+
+fig = plt.figure()
+    fig.set_figheight(15)
+    fig.set_figwidth(15)
+    fig.tight_layout()
+
 
 # AUTO CORRELATION PLOT
-# from statsmodels.graphics.tsaplots import plot_acf
-# fig = plot_acf(df[df["Company"] == 0]["SalesScaled"], lags = 21)
-# plt.show()
+from statsmodels.graphics.tsaplots import plot_acf
+for i in range(3):
+    fig = plot_acf(df[df["Company"] == i]["SalesScaled"], lags = 7*4)
+plt.show()
 
-# exit()
+exit()
 
 def weighted_mean_absolute_percentage_error(y_true, y_pred): 
     # y_true, y_pred = check_arrays(y_true, y_pred)
